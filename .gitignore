@@ -1,0 +1,8 @@
+.vagrant/
+.vscode/
+.ipynb_checkpoints/
+__pycache__/
+volumes/
+.DS_Store
+*.tmp
+*.log

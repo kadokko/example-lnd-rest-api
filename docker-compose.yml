@@ -1,0 +1,114 @@
+version: '3'
+
+services:
+
+  bitcoind:
+    build:
+      context: ./bitcoin-core
+      args:
+        BITCOIN_VER: $BITCOIN_VER
+    image: bitcoin-core:$BITCOIN_VER
+    container_name: bitcoind
+    hostname: bitcoind
+    ports:
+      - "18443:18443"
+    networks:
+      - lnd-local-network
+    command: >
+      /bin/bash -c "
+        bitcoind -regtest -rpcbind=0.0.0.0 &&
+        tail -f /dev/null"
+
+  lnd1:
+    build:
+      context: ./lnd
+      args:
+        LND_VER: $LND_VER
+    image: lnd:$LND_VER
+    container_name: lnd1
+    hostname: lnd1
+    volumes:
+      - ./volumes/lnd1:/home/lnd/share
+    ports:
+      - "8081:8080"
+    networks:
+      - lnd-local-network
+    command: >
+      /bin/bash -c "
+        lnd \
+        --listen=0.0.0.0:9735 \
+        --restlisten=0.0.0.0:8080 \
+        --rpclisten=0.0.0.0:10009 \
+        --lnddir=/home/lnd/.lnd && 
+        tail -f /dev/null"
+
+  lnd2:
+    build:
+      context: ./lnd
+      args:
+        LND_VER: $LND_VER
+    image: lnd:$LND_VER
+    container_name: lnd2
+    hostname: lnd2
+    volumes:
+      - ./volumes/lnd2:/home/lnd/share
+    ports:
+      - "8082:8080"
+    networks:
+      - lnd-local-network
+    command: >
+      /bin/bash -c "
+        lnd \
+        --listen=0.0.0.0:9735 \
+        --restlisten=0.0.0.0:8080 \
+        --rpclisten=0.0.0.0:10009 \
+        --lnddir=/home/lnd/.lnd &&
+        tail -f /dev/null"
+
+  lnd3:
+    build:
+      context: ./lnd
+      args:
+        LND_VER: $LND_VER
+    image: lnd:$LND_VER
+    container_name: lnd3
+    hostname: lnd3
+    volumes:
+      - ./volumes/lnd3:/home/lnd/share
+    ports:
+      - "8083:8080"
+    networks:
+      - lnd-local-network
+    command: >
+      /bin/bash -c "
+        lnd \
+        --listen=0.0.0.0:9735 \
+        --restlisten=0.0.0.0:8080 \
+        --rpclisten=0.0.0.0:10009 \
+        --lnddir=/home/lnd/.lnd &&
+        tail -f /dev/null"
+
+  jupyter:
+    build:
+      context: ./jupyter
+    image: jupyter
+    container_name: jupyter
+    hostname: jupyter
+    ports:
+      - "8888:8888"
+    networks:
+      - lnd-local-network
+    volumes:
+      - ./notebook:/notebook
+      - ./volumes:/lnd_share
+    command: >
+      /bin/sh -c "jupyter notebook \
+        --ip='*' \
+        --no-browser \
+        --NotebookApp.notebook_dir='/notebook' \
+        --NotebookApp.token='' \
+        --NotebookApp.password=''"
+    
+networks:
+  lnd-local-network:
+    external: true
